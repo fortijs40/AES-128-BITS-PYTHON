@@ -1,5 +1,6 @@
 from AESdefault import Sbox, InvSbox
 
+    # Rotates each round key by one byte/2 hex values
 def RotWord(word):
     return (word[2:]+word[:2])
 
@@ -17,38 +18,33 @@ def rcon(i):
 
 def KeyExpansion(key,Nk=4,Nr=10,Nb=4):
     # Convert key to first round_keys aka w0,w1,w2,w3
-    key_words = [key[i:i+8] for i in range(0, len(key), 8)]
+    key_words = [key[i:i+8] for i in range(0, len(key), 8)]  # splits the initial 16 byte key into 4 words each containing 8 hex values
     i=0
     # Initialize round keys array
-    round_keys = [0] * (Nb * (Nr + 1))
+    round_keys = [0] * (Nb * (Nr + 1))  # creates an array of 44 round keys
     for i in range(Nk):
         round_keys[i] = key_words[i]
     i = Nk
     while i < len(round_keys):
         temp = round_keys[i - 1]
         if i % Nk == 0:
-            temp = SubWord(RotWord(temp)) ^ int(rcon(i // Nk), 16)
-            temp = format(temp, 'x')
+            temp = SubWord(RotWord(temp)) ^ int(rcon(i // Nk), 16)  
+            temp = format(temp, 'x')    # converts int value back to hex
         # XOR with the word Nk positions back
-        round_keys[i] = hex(int(round_keys[i - Nk], 16) ^ int(temp, 16))[2:]
+        round_keys[i] = hex(int(round_keys[i - Nk], 16) ^ int(temp, 16))[2:]    # take away the 0x from the hex value
         i += 1
     return round_keys
 
-
-def AddRoundKey(state, round_key):
-
+def AddRoundKey(state, round_key):  
     for i in range(4):
         for j in range(4):
             state[i][j] = hex(int(state[i][j], 16) ^ int(round_key[i][2 * j:2 * (j + 1)], 16))[2:].zfill(2)
             
-
-
 def SubBytes(state):
     for i in range(4):
         for j in range(4):
             state[i][j] = format(Sbox(int(state[i][j], 16)), '02x')
             
-
 def ShiftRows(state):
     # Need to transpose the state matrix so it gets shifted correctly
     state = list(map(list, zip(*state)))
@@ -59,20 +55,19 @@ def ShiftRows(state):
     return state
 
 def MixColumns(state):
-    state = list(map(list, zip(*state)))    # need to rotate the 4x4 so it takes correct values
+    #state = list(map(list, zip(*state)))    # need to rotate the 4x4 so it takes correct values
     for i in range(4):
-        s0 = int(state[0][i], 16)
-        s1 = int(state[1][i], 16)
-        s2 = int(state[2][i], 16)
-        s3 = int(state[3][i], 16)
+        s0 = int(state[i][0], 16)
+        s1 = int(state[i][1], 16)
+        s2 = int(state[i][2], 16)
+        s3 = int(state[i][3], 16)
 
-        state[0][i] = format(gmult(0x02, s0) ^ gmult(0x03, s1) ^ s2 ^ s3 , '02x')
-        state[1][i] = format(s0 ^ gmult(0x02, s1) ^ gmult(0x03, s2) ^ s3 , '02x')
-        state[2][i] = format(s0 ^ s1 ^ gmult(0x02, s2) ^ gmult(0x03, s3) , '02x')
-        state[3][i] = format(gmult(0x03, s0) ^ s1 ^ s2 ^ gmult(0x02, s3) , '02x')
-    state = list(map(list, zip(*state)))    # rotate back to original
-    return state
-
+        state[i][0] = format(gmult(0x02, s0) ^ gmult(0x03, s1) ^ s2 ^ s3 , '02x')
+        state[i][1] = format(s0 ^ gmult(0x02, s1) ^ gmult(0x03, s2) ^ s3 , '02x')
+        state[i][2] = format(s0 ^ s1 ^ gmult(0x02, s2) ^ gmult(0x03, s3) , '02x')
+        state[i][3] = format(gmult(0x03, s0) ^ s1 ^ s2 ^ gmult(0x02, s3) , '02x')
+    #state = list(map(list, zip(*state)))    # rotate back to original
+    #return state
 def gmult(a, b):
     p = 0
     for _ in range(8):
@@ -88,20 +83,20 @@ def gmult(a, b):
 
 def Encypher(state,key,Nk=4,Nb=4,Nr=10):
     round_keys = KeyExpansion(key)
-    AddRoundKey(state,round_keys[0:4])
+    AddRoundKey(state,round_keys[0:4])    # give first 4 round keys
     start_index = 0
     for round in range (1,Nr):
         start_index += Nk
         SubBytes(state)
         state = ShiftRows(state)
-        state = MixColumns(state)
-        AddRoundKey(state, round_keys[start_index:start_index+4])
+        MixColumns(state)
+        AddRoundKey(state, round_keys[start_index:start_index+4])   # give next 4 round keys
     SubBytes(state)
     state = ShiftRows(state)
-    AddRoundKey(state,round_keys[40:44])
+    AddRoundKey(state,round_keys[40:44])  # give last 4 round keys
 
     return state
-
+# return back 4x4 matrix of cyphered text
 def getEncypheredText(inputArray,key):
     resultArray = Encypher(inputArray,key)
     return resultArray
@@ -117,33 +112,33 @@ def InvSubBytes(state):
         for j in range(4):
             state[i][j] = format(InvSbox(int(state[i][j], 16)), '02x')
 def InvMixColumns(state):
-    state = list(map(list, zip(*state)))
+    #state = list(map(list, zip(*state)))
     for i in range(4):
-        s0 = int(state[0][i], 16)
-        s1 = int(state[1][i], 16)
-        s2 = int(state[2][i], 16)
-        s3 = int(state[3][i], 16)
+        s0 = int(state[i][0], 16)
+        s1 = int(state[i][1], 16)
+        s2 = int(state[i][2], 16)
+        s3 = int(state[i][3], 16)
 
-        state[0][i] = format(gmult(0x0e, s0) ^ gmult(0x0b, s1) ^ gmult(0x0d, s2) ^ gmult(0x09, s3), '02x')
-        state[1][i] = format(gmult(0x09, s0) ^ gmult(0x0e, s1) ^ gmult(0x0b, s2) ^ gmult(0x0d, s3), '02x')
-        state[2][i] = format(gmult(0x0d, s0) ^ gmult(0x09, s1) ^ gmult(0x0e, s2) ^ gmult(0x0b, s3), '02x')
-        state[3][i] = format(gmult(0x0b, s0) ^ gmult(0x0d, s1) ^ gmult(0x09, s2) ^ gmult(0x0e, s3), '02x')
+        state[i][0] = format(gmult(0x0e, s0) ^ gmult(0x0b, s1) ^ gmult(0x0d, s2) ^ gmult(0x09, s3), '02x')
+        state[i][1] = format(gmult(0x09, s0) ^ gmult(0x0e, s1) ^ gmult(0x0b, s2) ^ gmult(0x0d, s3), '02x')
+        state[i][2] = format(gmult(0x0d, s0) ^ gmult(0x09, s1) ^ gmult(0x0e, s2) ^ gmult(0x0b, s3), '02x')
+        state[i][3] = format(gmult(0x0b, s0) ^ gmult(0x0d, s1) ^ gmult(0x09, s2) ^ gmult(0x0e, s3), '02x')
 
-    state = list(map(list, zip(*state)))
-    return state
+    #state = list(map(list, zip(*state)))
+    #return state
 def Decypher(state, key, Nk=4, Nb=4, Nr=10):
-    round_keys = KeyExpansion(key)
-    AddRoundKey(state, round_keys[40:44])
-    for round in range(Nr - 1, 0, -1):
+    round_keys = KeyExpansion(key)          # generate all the round keys again
+    AddRoundKey(state, round_keys[40:44])   # take last 4 round keys
+    for round in range(Nr - 1, 0, -1):      # start from 9 and go down to 1
         state = InvShiftRows(state)
         InvSubBytes(state)
         AddRoundKey(state, round_keys[round * Nk:(round + 1) * Nk])
-        state = InvMixColumns(state)
+        InvMixColumns(state)
 
     state = InvShiftRows(state)
     InvSubBytes(state)
-    AddRoundKey(state, round_keys[0:4])
+    AddRoundKey(state, round_keys[0:4])     # take first 4 round keys
     return state
-def getUncypheredText(cypheredArray,key):
+def getUncypheredText(cypheredArray,key):   # return back 4x4 matrix of plain text
     plainArray = Decypher(cypheredArray,key)
     return plainArray

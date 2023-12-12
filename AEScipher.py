@@ -34,20 +34,22 @@ window = sg.Window('AES encrypt and decrypt', layout, size=(600, 300))
 
 # Display and interact with the Window using an Event Loop
 #originalOutputText = window['-OUTPUT-']
+#converts 4x4 matrix to 128 bit hex string
 def matrix_to_string(matrix):
     return ''.join([''.join([str(cell) for cell in row]) for row in matrix])
-
-def matrix_to_text(matrix):     # Convert cypher matrix back to text
+#converts 4x4 matrix to plain text
+def matrix_to_text(matrix):     
     text = ""
     for row in matrix:
         for cell in row:
             text += chr(int(cell, 16))
     return text
+#converts hex string to 4x4 matrix
 def hex_to_matrix(hex_string):
-    matrix = [['00', '00', '00', '00'] for _ in range(4)]
+    matrix = [['00', '00', '00', '00'] for _ in range(4)] # create 4x4 matrix
     for i in range(4):
         for j in range(4):
-            char_index = (i * 4 + j) * 2
+            char_index = (i * 4 + j) * 2    
             matrix[i][j] = hex_string[char_index:char_index + 2]
     return matrix
 while True:
@@ -56,11 +58,10 @@ while True:
     if event == sg.WINDOW_CLOSED:
         break
 
-    # Check the length of the entered text
     input_text = values['message']
     input_key = values['key']
     cypheredText = values['cypherText']
-
+    # Check the length of the entered text
     if len(input_text) > 16:
         window['warning'].update("Plain text character limit reached: 16/" + str(len(input_text) - 1))
         window['message'].update(input_text[:16])  # Truncate to the first 16 characters
@@ -79,17 +80,19 @@ while True:
         window['warningKey'].update("Cypher key character limit reached: 16/" + str(len(input_key)))
 
 
-
+    # if user presses encrypt button
     if event == 'ENCRYPT':
         if len(input_text) < 16 or len(input_key) < 16:
             continue
-        hex_text = input_text.encode('utf-8').hex()
-        hex_key = input_key.encode('utf-8').hex()
+        hex_text = input_text.encode('utf-8').hex() # Convert text to hex
+        hex_key = input_key.encode('utf-8').hex()   # Convert key to hex
 
         #originalOutputText.update(hex_text)  # Display the original hex value
         #tempInput = "3243f6a8885a308d313198a2e0370734"
-        originalPlainTextArray = hex_to_matrix(hex_text)
-        cyphered4x4 = getEncypheredText(originalPlainTextArray,hex_key)
+        #tempKey = "2b7e151628aed2a6abf7158809cf4f3c"
+
+        originalPlainTextArray = hex_to_matrix(hex_text)    # Convert hex string to 4x4 matrix
+        cyphered4x4 = getEncypheredText(originalPlainTextArray,hex_key)   # Call encryption and get back cyphered 4x4 matrix
         window['-CYPHERED-TEXT-'].update(matrix_to_string(cyphered4x4))
     if event == 'DECRYPT':
         if len(cypheredText) != 32 or len(input_key) < 16:
@@ -98,7 +101,6 @@ while True:
         cypheredText = hex_to_matrix(values['cypherText'])
         uncyphered4x4 = getUncypheredText(cypheredText,hex_key)
         window['-DECYPHERED-TEXT-'].update(matrix_to_text(uncyphered4x4))
-
 
 # Finish up by removing from the screen
 window.close()
