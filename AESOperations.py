@@ -31,14 +31,14 @@ def KeyExpansion(key,Nk=4,Nr=10,Nb=4):
             temp = SubWord(RotWord(temp)) ^ int(rcon(i // Nk), 16)  
             temp = format(temp, 'x')    # converts int value back to hex
         # XOR with the word Nk positions back
-        round_keys[i] = hex(int(round_keys[i - Nk], 16) ^ int(temp, 16))[2:]    # take away the 0x from the hex value
+        round_keys[i] = format(int(round_keys[i - Nk], 16) ^ int(temp, 16), '08x')  # ensures each word has 8 hex characters 
         i += 1
     return round_keys
 
 def AddRoundKey(state, round_key):  
     for i in range(4):
         for j in range(4):
-            state[i][j] = hex(int(state[i][j], 16) ^ int(round_key[i][2 * j:2 * (j + 1)], 16))[2:].zfill(2)
+            state[i][j] = hex(int(state[i][j], 16) ^ int(round_key[i][2 * j:2 * (j + 1)], 16))[2:].zfill(2)    # state is 4x4 matrix,round key is 1 dimentional array of 4 round keys 
             
 def SubBytes(state):
     for i in range(4):
@@ -94,7 +94,6 @@ def Encypher(state,key,Nk=4,Nb=4,Nr=10):
     SubBytes(state)
     state = ShiftRows(state)
     AddRoundKey(state,round_keys[40:44])  # give last 4 round keys
-
     return state
 # return back 4x4 matrix of cyphered text
 def getEncypheredText(inputArray,key):
