@@ -9,7 +9,7 @@ first_column = [
     ],
     [ 
         sg.InputText(key='fileName', size=(60)),
-        sg.FileBrowse("Browse", key='-BROWSE-', file_types=(("Text Files", "*.txt"),), size=(10, 1), enable_events=True,target='-BROWSE-'),
+        sg.FileBrowse("Browse", key='-BROWSE-', file_types=(("Text Files", "*.txt"),), size=(10, 1), enable_events=True,target='-BROWSE-'), #targets itself to launch event when clicked
     ],
     [
         sg.Text("Test FIPS197 hexBits:", size=(20, 1), key='textForTest', background_color='lime', text_color='black', pad=(0, 0)),
@@ -20,30 +20,11 @@ first_column = [
         sg.Multiline("2b7e151628aed2a6abf7158809cf4f3c",size=(40, 1), key='testKeyBits', disabled=True, no_scrollbar=True, background_color='gray', pad=(0, 0),border_width=0)
     ],
     [
-        sg.Text("Enter your 32 symbol hex to encrypt", size=(30, 1)),
-        sg.Column([[sg.Input(key='message',size=(40), enable_events=True)]])
-    ],
-    [
         sg.Text("Enter your 32 symbol hex key", size=(30, 1)),
         sg.Column([[sg.Input(key='key', size=(40), enable_events=True)]])
     ],
-    [sg.Text(key='warning'),sg.Text(key='warningKey')],
-    [sg.Text(size=(40, 1), key='-OUTPUT-')],
-    [sg.Button('SAVE')],
-    [sg.Button('DISCARD')],
+    [sg.Text(key='warningKey')],
     [sg.Button('ENCRYPT')],
-    [
-        sg.Text("Cyphered output:", size=(13, 1), key='CypherOut', background_color='pink', text_color='black', pad=(0, 0)),
-        sg.Multiline(size=(40, 1), key='-CYPHERED-TEXT-', disabled=True, no_scrollbar=True, background_color='pink', pad=(0, 0),border_width=0)
-    ],
-    [
-    sg.Text("Enter your cypherText:", size=(30, 1)),
-    sg.Column([[sg.Input(key='cypherText',size=(40), enable_events=True)]])
-    ],
-    [
-        sg.Text("Decyphered output:", size=(20, 1), key='DecypherOut', background_color='pink', text_color='black', pad=(0, 0)),
-        sg.Multiline(size=(40, 1), key='-DECYPHERED-TEXT-', disabled=True, no_scrollbar=True, background_color='pink', pad=(0, 0),border_width=0)
-    ],
     [sg.Button('DECRYPT')]
 ]
 second_column = [
@@ -52,15 +33,14 @@ second_column = [
 ]
 layout = [
     [
-        sg.Column(first_column),
+        sg.Column(first_column,size=(600,1100),background_color="#240A2B"),
         sg.VSeperator(),
-        sg.Column(second_column)
+        sg.Column(second_column,size=(600,1100),background_color="#240A2B")
     ]
 ]
 
-
 # Create the window
-window = sg.Window('AES encrypt and decrypt', layout, size=(1200, 600))
+window = sg.Window('AES encrypt and decrypt', layout, size=(1200, 600),background_color="black",button_color=("black","white"))
 
 # Display and interact with the Window using an Event Loop
 #originalOutputText = window['-OUTPUT-']
@@ -68,13 +48,9 @@ window = sg.Window('AES encrypt and decrypt', layout, size=(1200, 600))
 def matrix_to_string(matrix):
     return ''.join([''.join([str(cell) for cell in row]) for row in matrix])
 #converts 4x4 matrix to plain text
-def hex_to_text(hex):     
-    text = ""
-    for byte in range(0,len(hex),2):
-            text += chr(int(hex[byte:byte+2], 16))
-    padding_length = int(hex[-2:],16)
-    print(hex[-2:],'====last 2 hex values')
-    print(padding_length, '= PADDING LENGTH')
+def hex_to_text(hex):
+    text = bytes.fromhex(hex).decode('utf-8')
+    padding_length = int(hex[-2:], 16)
     return text[:-padding_length]
 #converts hex string to 4x4 matrix
 def hex_to_matrix(hex_string):
@@ -90,26 +66,23 @@ def text_to_hex(text):
 def add_padding_to_hex_text(hex_text):
     #print(len(hex_text)//2, '-garums teksta bytos-', (len(hex_text)%8)//2)
     amount_to_pad = 16 - ((len(hex_text)%32)//2)  #since the text is in hex already the reminder is taken from 32 (1 text character = 2 hex characters)
-    print(amount_to_pad , "-padojamais garums")
     padding = format(amount_to_pad, '02x')  #converts int(amount) into hex number with 2 characters(will add 0 in front of the hex if needed)
-    print(padding, ' == padding hexadec')
     return hex_text + padding * amount_to_pad
+
 def chop_hex_into_128bits(hex_string):
     list_of_hex = [hex_string[x:x+32] for x in range(0,len(hex_string),32)]
-    print(list_of_hex,"===== ŠITĀ SAGRIEŽ")
     return list_of_hex
-def clear_variables_from_values():
+
+def clear_variables_from_values():          #clears used variables
     global cypheredText, input_text, fileContent
     input_text.clear()
     fileContent = ''
     cypheredText = ''
-    window['-FILE-CONTENT-'].update('')
-    window['-NEW-FILE-CONTENT-'].update('')
     window['fileName'].update('')
+
 def write_to_file(text_to_write):
-    file = open(values['fileName'],'w')
-    file.write(text_to_write)
-    file.close()
+    with open(values['fileName'], 'w', encoding='utf-8') as file:
+        file.write(text_to_write)
 
 cypheredText = ''
 uncypheredText = ''
@@ -122,17 +95,15 @@ while True:
 
     if event == '-BROWSE-':
         if values['-BROWSE-']:
-            file = open(values['-BROWSE-'], 'r')
+            file = open(values['-BROWSE-'], 'r',encoding="utf8")
             fileContent = file.read()
+            #print(text_to_hex(fileContent))
             file.close()
             if fileContent:
                 window['fileName'].update(values['-BROWSE-'])
-                #print("File content:", len(fileContent))
-                #print(text_to_hex(fileContent))
-                #input_text = chop_hex_into_128bits(text_to_hex(fileContent))
-                #input_text = chop_hex_into_128bits(input_text)
-                #print(chop_hex_into_128bits(text_to_hex(fileContent)))
                 window['-FILE-CONTENT-'].update(fileContent)
+                window['-NEW-FILE-CONTENT-'].update('')
+
     input_key = values['key']
     # Check the length of the entered key
     if len(input_key) > 32:
@@ -147,40 +118,31 @@ while True:
     if event == 'ENCRYPT':
         if len(input_key) < 32 or len(fileContent) < 1 :
             continue
-        iv = secrets.token_hex(16)
+        iv = secrets.token_hex(16)      #Generates secure 16 byte hex key for each encryption
         input_text = add_padding_to_hex_text(text_to_hex(fileContent))
         input_text = chop_hex_into_128bits(input_text)
-        #print(iv,"this is my IV")
         cbc_encrpytion_xor = format(int(iv,16) ^ int(input_text[0],16),'032x')
-        for i in range(len(input_text)):
-            if i == 0:
-                originalPlainTextArray = hex_to_matrix(cbc_encrpytion_xor)
-                cyphered4x4 = getEncypheredText(originalPlainTextArray,input_key)
-                cypheredText = matrix_to_string(cyphered4x4)
-            else:
-                #print("old cypherblock:", matrix_to_string(cyphered4x4))
-                cbc_encrpytion_xor = format(int(matrix_to_string(cyphered4x4),16) ^ int(input_text[i],16),'032x')
-                #print("after xor with cyphered text:", cbc_encrpytion_xor, " == derived from:", hex(int(input_text[i],16)))
-                originalPlainTextArray = hex_to_matrix(cbc_encrpytion_xor)
-                cyphered4x4 = getEncypheredText(originalPlainTextArray,input_key)
-                cypheredText += matrix_to_string(cyphered4x4)
-        #print("Cyphered text:", cypheredText)
-        cypheredText = iv+cypheredText
-        window['-NEW-FILE-CONTENT-'].update(cypheredText)
-        write_to_file(cypheredText)
-        #print("Cypheredtext+IV",cypheredText)
-        #hex_text = input_text.encode('utf-8').hex()  meant for text to hex, but had to change that we need to enter hex values from the start
 
-        #originalPlainTextArray = hex_to_matrix(input_text)    # Convert hex string to 4x4 matrix
-        #cyphered4x4 = getEncypheredText(originalPlainTextArray,input_key)   # Call encryption and get back cyphered 4x4 matrix
-        #window['-CYPHERED-TEXT-'].update(matrix_to_string(cyphered4x4))
+        for i in range(len(input_text)):
+            if not i == 0:              # on first iteration IV is XOR'ed with plain text and this is ignored
+                cbc_encrpytion_xor = format(int(matrix_to_string(cyphered4x4),16) ^ int(input_text[i],16),'032x')
+            #print("after xor with cyphered text:", cbc_encrpytion_xor, " == derived from:", hex(int(input_text[i],16)))
+            originalPlainTextArray = hex_to_matrix(cbc_encrpytion_xor)
+            cyphered4x4 = getEncypheredText(originalPlainTextArray,input_key)
+            cypheredText += matrix_to_string(cyphered4x4)
+    
+        cypheredText = iv+cypheredText
+        #window['-NEW-FILE-CONTENT-'].update(cypheredText)
+        write_to_file(cypheredText)
+        clear_variables_from_values()
+        #print("Cypheredtext+IV",cypheredText)
+
+    #if decrypt button is pressed
     if event == 'DECRYPT':
-        if  len(input_key) < 32:
+        if  len(input_key) < 32 or len(fileContent) < 1:
             continue
         input_text = chop_hex_into_128bits(fileContent)
-        print(input_text, 'INPUT')
         iv = fileContent[:32]   #IV is the first 32 hex numbers
-        print(iv,'          decypher IV')
         for i in range(1,len(input_text)):
             cypheredText = hex_to_matrix(input_text[i])
             uncyphered4x4 = getUncypheredText(cypheredText,input_key)
@@ -189,24 +151,12 @@ while True:
                 print(uncypheredText)
             else:
                 uncypheredText += format(int(matrix_to_string(uncyphered4x4),16) ^ int(input_text[i-1],16),'032x')
+        print(uncypheredText)
         plain_text = hex_to_text(uncypheredText)
-        window['-NEW-FILE-CONTENT-'].update(plain_text)
-        print(uncypheredText, '===uncyphered TEXT IN HEX')
-        print(hex_to_text(uncypheredText), '===uncyphered TEXT')
+        print(plain_text)
+       # window['-NEW-FILE-CONTENT-'].update(plain_text)
+        #print(hex_to_text(uncypheredText), '===uncyphered TEXT')
         write_to_file(plain_text)
-        #cypheredText = hex_to_matrix(values['cypherText'])
-        #uncyphered4x4 = getUncypheredText(cypheredText,input_key)
-        #window['-DECYPHERED-TEXT-'].update(matrix_to_string(uncyphered4x4))
-    if event == 'SAVE':
-        decision = sg.popup_ok_cancel("Do you want to overwrite the plaintext file?")
-        if decision == 'Cancel' or decision == None or len(values['fileName'])<1 :
-            continue
-        file = open(values['fileName'],'w')
-        file.write(cypheredText)
-        file.close()
-        clear_variables_from_values()
-
-    if event == 'DISCARD':
         clear_variables_from_values()
  
 # Finish up by removing from the screen
