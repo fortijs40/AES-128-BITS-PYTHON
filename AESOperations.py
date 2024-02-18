@@ -37,12 +37,12 @@ def KeyExpansion(key,Nk=4,Nr=10,Nb=4):
 
 def AddRoundKey(state, round_key):  
     for i in range(4):
-        for j in range(4):
-            state[i][j] = hex(int(state[i][j], 16) ^ int(round_key[i][2 * j:2 * (j + 1)], 16))[2:].zfill(2)    # state is 4x4 matrix,round key is 1 dimentional array of 4 round keys 
+        for j in range(4): # state is 4x4 matrix,round key is 1 dimentional array of 4 round keys 
+            state[i][j] = hex(int(state[i][j], 16) ^ int(round_key[i][2 * j:2 * (j + 1)], 16))[2:].zfill(2)    
             
 def SubBytes(state):
     for i in range(4):
-        for j in range(4):
+        for j in range(4):  # substitute every byte from Sbox table
             state[i][j] = format(Sbox(int(state[i][j], 16)), '02x')
             
 def ShiftRows(state):
@@ -55,19 +55,18 @@ def ShiftRows(state):
     return state
 
 def MixColumns(state):
-    #state = list(map(list, zip(*state)))    # need to rotate the 4x4 so it takes correct values
+    #take each column and mix it
     for i in range(4):
-        s0 = int(state[i][0], 16)
+        s0 = int(state[i][0], 16)   
         s1 = int(state[i][1], 16)
         s2 = int(state[i][2], 16)
         s3 = int(state[i][3], 16)
-
+        # mix each column and format back to hex
         state[i][0] = format(gmult(0x02, s0) ^ gmult(0x03, s1) ^ s2 ^ s3 , '02x')
         state[i][1] = format(s0 ^ gmult(0x02, s1) ^ gmult(0x03, s2) ^ s3 , '02x')
         state[i][2] = format(s0 ^ s1 ^ gmult(0x02, s2) ^ gmult(0x03, s3) , '02x')
         state[i][3] = format(gmult(0x03, s0) ^ s1 ^ s2 ^ gmult(0x02, s3) , '02x')
-    #state = list(map(list, zip(*state)))    # rotate back to original
-    #return state
+# Function to multiply two numbers in GF(2^8)
 def gmult(a, b):
     p = 0
     for _ in range(8):
@@ -133,7 +132,6 @@ def Decypher(state, key, Nk=4, Nb=4, Nr=10):
         InvSubBytes(state)
         AddRoundKey(state, round_keys[round * Nk:(round + 1) * Nk])
         InvMixColumns(state)
-
     state = InvShiftRows(state)
     InvSubBytes(state)
     AddRoundKey(state, round_keys[0:4])     # take first 4 round keys
