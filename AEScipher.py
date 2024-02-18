@@ -19,7 +19,10 @@ first_column = [
     [sg.Input(key='key', size=(52), enable_events=True,font=("Roboto",14),background_color="#B7F0EA",justification="centre")],
     [sg.Text("I still need more characters: 0/32",size=(52),key='warningKey',font=("Roboto",15),background_color="white",text_color="black",justification="centre")],
     [sg.Text("", size=(20, 4),background_color='#240A2B')],
-    [sg.Button('ENCRYPT',size=(26,2),font=("Roboto",15),button_color=("black","#90fca0")),sg.Button('DECRYPT',size=(26,2),font=("Roboto",15),button_color=("black","#fc9090"))],
+    [
+        sg.Button('ENCRYPT',size=(25,2),font=("Roboto",15),button_color=("black","#90fca0")),
+        sg.Button('DECRYPT',size=(25,2),font=("Roboto",15),button_color=("black","#fc9090"))
+    ],
 ]
 second_column = [
     [sg.Text("Preview of before:",size=(50,1),background_color="white",text_color="black",justification="centre",font=("Roboto",15))],
@@ -60,7 +63,6 @@ def hex_to_matrix(hex_string):
 def text_to_hex(text):
     return text.encode('utf-8').hex()
 def add_padding_to_hex_text(hex_text):
-    #print(len(hex_text)//2, '-garums teksta bytos-', (len(hex_text)%8)//2)
     amount_to_pad = 16 - ((len(hex_text)%32)//2)  #since the text is in hex already the reminder is taken from 32 (1 text character = 2 hex characters)
     padding = format(amount_to_pad, '02x')  #converts int(amount) into hex number with 2 characters(will add 0 in front of the hex if needed)
     return hex_text + padding * amount_to_pad
