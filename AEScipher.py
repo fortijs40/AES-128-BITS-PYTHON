@@ -1,6 +1,6 @@
 import PySimpleGUI as sg
 import secrets
-from AESOperations import getEncypheredText, getUncypheredText
+from AESOperations import getEncypheredText, getUncypheredText, KeyExpansion
 
 # Define the window's contents
 first_column = [
@@ -121,13 +121,13 @@ while True:
             input_text = add_padding_to_hex_text(text_to_hex(fileContent))
             input_text = chop_hex_into_128bits(input_text)
             cbc_encrpytion_xor = format(int(iv,16) ^ int(input_text[0],16),'032x')
-
+            round_keys = KeyExpansion(input_key)
             for i in range(len(input_text)):
                 if not i == 0:              # on first iteration IV is XOR'ed with plain text and this is ignored
                     cbc_encrpytion_xor = format(int(matrix_to_string(cyphered4x4),16) ^ int(input_text[i],16),'032x')
                 #print("after xor with cyphered text:", cbc_encrpytion_xor, " == derived from:", hex(int(input_text[i],16)))
                 originalPlainTextArray = hex_to_matrix(cbc_encrpytion_xor)
-                cyphered4x4 = getEncypheredText(originalPlainTextArray,input_key)
+                cyphered4x4 = getEncypheredText(originalPlainTextArray,round_keys)
                 cypheredText += matrix_to_string(cyphered4x4)
         
             cypheredText = iv+cypheredText
@@ -144,11 +144,12 @@ while True:
         try:
             if  len(input_key) < 32 or len(fileContent) < 1:
                 continue
+            round_keys = KeyExpansion(input_key)
             input_text = chop_hex_into_128bits(fileContent)
             iv = fileContent[:32]   #IV is the first 32 hex numbers
             for i in range(1,len(input_text)):
                 cypheredText = hex_to_matrix(input_text[i])
-                uncyphered4x4 = getUncypheredText(cypheredText,input_key)
+                uncyphered4x4 = getUncypheredText(cypheredText,round_keys)
                 if i == 1:
                     uncypheredText = format(int(matrix_to_string(uncyphered4x4),16) ^ int(iv,16),'032x')
                 else:

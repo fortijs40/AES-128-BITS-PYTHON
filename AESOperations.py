@@ -80,8 +80,8 @@ def gmult(a, b):
         b >>= 1
     return p 
 
-def Encypher(state,key,Nk=4,Nb=4,Nr=10):
-    round_keys = KeyExpansion(key)
+def Encypher(state,round_keys,Nk=4,Nb=4,Nr=10):
+    
     AddRoundKey(state,round_keys[0:4])    # give first 4 round keys
     start_index = 0
     for round in range (1,Nr):
@@ -95,8 +95,8 @@ def Encypher(state,key,Nk=4,Nb=4,Nr=10):
     AddRoundKey(state,round_keys[40:44])  # give last 4 round keys
     return state
 # return back 4x4 matrix of cyphered text
-def getEncypheredText(inputArray,key):
-    resultArray = Encypher(inputArray,key)
+def getEncypheredText(inputArray,round_keys):
+    resultArray = Encypher(inputArray,round_keys)
     return resultArray
 
 def InvShiftRows(state):
@@ -124,8 +124,7 @@ def InvMixColumns(state):
 
     #state = list(map(list, zip(*state)))
     #return state
-def Decypher(state, key, Nk=4, Nb=4, Nr=10):
-    round_keys = KeyExpansion(key)          # generate all the round keys again
+def Decypher(state, round_keys, Nk=4, Nb=4, Nr=10): 
     AddRoundKey(state, round_keys[40:44])   # take last 4 round keys
     for round in range(Nr - 1, 0, -1):      # start from 9 and go down to 1
         state = InvShiftRows(state)
@@ -136,6 +135,6 @@ def Decypher(state, key, Nk=4, Nb=4, Nr=10):
     InvSubBytes(state)
     AddRoundKey(state, round_keys[0:4])     # take first 4 round keys
     return state
-def getUncypheredText(cypheredArray,key):   # return back 4x4 matrix of plain text
-    plainArray = Decypher(cypheredArray,key)
+def getUncypheredText(cypheredArray,round_keys):   # return back 4x4 matrix of plain text
+    plainArray = Decypher(cypheredArray,round_keys)
     return plainArray
